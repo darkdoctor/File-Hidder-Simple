@@ -16,6 +16,8 @@ namespace File_Hidder_Sample
     {
         long _totalBytesSelected = 0;
         string _mainFile = "";
+        string split = "@HACKFORUMS.NET@Albania";
+
 
         public BindingList<xFile> _selectedFiles = new BindingList<xFile>();
 
@@ -90,7 +92,7 @@ namespace File_Hidder_Sample
             }
         }
 
-        // Save
+        // Build
         private void button4_Click(object sender, EventArgs e)
         {
             using (var save = new SaveFileDialog())
@@ -99,9 +101,52 @@ namespace File_Hidder_Sample
                 {
                     File.Copy(_mainFile, save.FileName);
                     string tmp = Serializer.Serialize(_selectedFiles);
-                    string split = "@HACKFORUMS.NET@Albania";
 
                     File.AppendAllText(save.FileName, split + tmp);
+                }
+            }
+        }
+
+        // Read Files
+        private void button5_Click(object sender, EventArgs e)
+        {
+            using (var open = new OpenFileDialog())
+            {
+                if (open.ShowDialog() == DialogResult.OK)
+                {
+                    _selectedFiles.Clear();
+                    _mainFile = open.FileName;
+                    textBox1.Text = _mainFile;
+
+                    string tmp = File.ReadAllText(_mainFile);
+                    string xml = tmp.Split(new string[] { split }, StringSplitOptions.None)[1];
+
+                    _selectedFiles = Serializer.Deserialize<BindingList<xFile>>(xml);
+
+                    listBox1.DataSource = _selectedFiles;
+                    listBox1.DisplayMember = "Path";
+
+                    foreach (var f in _selectedFiles)
+                        ChangeTotalBytesSelectedValue(+f.Bytes.Length);
+                }
+            }
+        }
+
+        // Save to Disk
+        private void button6_Click(object sender, EventArgs e)
+        {
+            using(var browse = new FolderBrowserDialog())
+            {
+                if(browse.ShowDialog() == DialogResult.OK)
+                {
+                    foreach(var fileIterator in _selectedFiles)
+                    {
+                        string fileName = fileIterator.Path.Substring(fileIterator.Path.LastIndexOf("\\") +1);
+
+                        string fullPath = Path.Combine(browse.SelectedPath, fileName);
+
+                        File.WriteAllBytes(fullPath, fileIterator.Bytes);
+                    }
                 }
             }
         }
